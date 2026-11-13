@@ -1,68 +1,61 @@
 # dsh-trae-agent-team
 
-> Dispatch-and-acceptance discipline: DSH acts as the team lead, TRAE (or DSH's native Agent Teams) runs the members, and the maker never verifies its own work.
-> Single-file skill. No runtime, no dependencies — drop \`SKILL.md\` into a skills directory.
+DSH leads, TRAE runs the members: a discipline for dispatch, acceptance and bookkeeping. Single-file skill, no runtime dependencies.
 
 **English** ｜ [中文](README.zh.md)
 
-## What it is
+## Ten rules
 
-An operating discipline that makes multi-agent work **accountable and auditable** — not a framework, not a plugin, no services to run. Ten rules:
+1. Budget first: 2 members (max 4), 3 rounds each, 3 rework rounds, 30 min ceiling — stop and report when exceeded;
+2. Three roles: lead dispatches, maker executes, checker verifies;
+3. Six-field task contract: acceptance definition, write scope, dependencies, irreversibility flag, QA checklist, evidence slot;
+4. State machine: one `in_progress` per member, no claiming while awaiting acceptance, only the owner mutates state;
+5. maker ≠ checker: the author never verifies; hand acceptance to a fresh-context subagent;
+6. One next step per round;
+7. Gates: rounds, subagent count and parallelism are hard numbers;
+8. Line-item ledger: time, dispatch, artifacts, duration, rework;
+9. Shutdown: artifact paths, criteria re-run, ledger closed;
+10. Cross-runtime: task board, mailbox, two-way wake-ups (optional).
 
-1. **Budget first, meeting second** — 2 members (max 4), 3 rounds each, 3 rework rounds, 30 min ceiling; stop and report when exceeded;
-2. **Three roles** — lead / maker / checker, one sentence of persona each;
-3. **Six-field task contract** — acceptance definition, write scope, dependencies, irreversibility flag, QA checklist (≤12), evidence slot;
-4. **Three state-machine invariants** — one `in_progress` per member, no claiming while awaiting acceptance, only the owner mutates state;
-5. **maker ≠ checker** — the author never verifies; use a fresh-context subagent, ideally a different model;
-6. **One next step per round**, never ten at once;
-7. **Cost and blast-radius gates** — rounds, subagent count and parallelism are hard numbers;
-8. **Line-item ledger** — time, dispatch, artifacts, duration, rework count;
-9. **Shutdown checklist** — artifact paths + criteria re-run + ledger closed;
-10. **Cross-runtime orchestration (optional)** — DSH ⇄ TRAE over a task board, a mailbox and two-way wake-ups (plain Node scripts).
+With no gates, a single instruction — reply with one sentence, dispatch nothing — produced 57 model requests, ~730k input tokens and 6 awakened members. The numbers above are ceilings, not suggestions.
 
 ## Install
 
 ```bash
-# DSH / Claude-Code style skills root
 mkdir -p ~/.dsh/skills/dsh-trae-agent-team
 curl -fsSL https://raw.githubusercontent.com/Myng-i/dsh-trae-agent-team/main/SKILL.md \
   -o ~/.dsh/skills/dsh-trae-agent-team/SKILL.md
 
-# Trae CN / compatible root
 mkdir -p ~/.trae-cn/skills/dsh-trae-agent-team
 cp ~/.dsh/skills/dsh-trae-agent-team/SKILL.md ~/.trae-cn/skills/dsh-trae-agent-team/SKILL.md
 ```
 
-Restart the host so it rescans the skills root. **Never keep same-named backups inside a skills root** — the loader resolves them by name; one measured case silently loaded v0.3.0 of another skill instead of v0.3.7.
+Restart the host afterwards. Keep backups outside the skills root — a same-named backup is loaded as the real skill.
 
-## Two ways to run it
+## Usage
 
 | | DSH native Agent Teams | Cross-runtime (DSH ⇄ TRAE) |
 |---|---|---|
 | Interface | `spawn_teammate` / `team_task_*` / `send_message` | `bus-cli.mjs` task board + `mailbox.mjs` + `wake-*.mjs` |
-| Best for | multiple roles inside one DSH session | using TRAE's free subagents as members |
-| Depends on | nothing (built in) | companion repo [dsh-trae-channel](https://github.com/Myng-i/dsh-trae-channel) |
+| Best for | multiple roles in one DSH session | TRAE's free subagents as members |
+| Depends on | nothing | companion repo [dsh-trae-channel](https://github.com/Myng-i/dsh-trae-channel) |
 
-Dispatch template: [`templates/task-body-template.md`](templates/task-body-template.md) — 11 items plus the title line, 12 sections total; a missing section means the task is not ready.
+Dispatch template: [`templates/task-body-template.md`](templates/task-body-template.md) — twelve sections, all required.
 
-## Parallelism: measured, not assumed
+## Parallelism (measured)
 
-All verdicts come from filesystem timestamps (subagent-reported times drifted 2–3.6 s in measurement, so they are not evidence):
+Verdicts use filesystem timestamps; subagent-reported times drift 2–3.6 s and are not evidence.
 
 | Shape | Result |
 |---|---|
-| 3 separate tasks posted at once | **serial** — zero overlap (a session handles one turn at a time) |
-| one task asking for 3 concurrent subagents | true parallel, 4 s overlap |
-| 4 subagents | 7.211 s overlap; #4 started 0.69–0.88 s late |
-| 5 subagents | 14.761 s overlap; 8.073 s start spread, mostly self-inflicted sandbox retries (1.232 s once told not to retry) |
-| 6 subagents | #6 hard-fails: `concurrent subagent limit reached (limit: 5)` — 0 s, no queueing |
+| 3 tasks posted at once | serial, zero overlap |
+| 3 subagents in one task | true parallel, 4 s overlap |
+| 4 routes | 7.211 s overlap |
+| 5 routes | 14.761 s overlap |
+| 6 routes | #6 fails: `concurrent subagent limit reached (limit: 5)`, no queueing |
 
-⇒ **Parallelism requires "one task, many subagents", not "many tasks". The limit of 5 is hard: drop routes, don't wait.**
-
-## Why the cost rules exist
-
-A single instruction ("reply with one sentence, dispatch nothing") produced **57 model requests, ~730k input tokens and 6 awakened members** under an ungated configuration: the team charter propagates itself and outranks human instructions. Hence hard numbers for budget, parallelism and rework — and stop-and-report instead of silently continuing.
+⇒ Parallelism means one task with many subagents, not many tasks. The limit is 5; drop routes instead of waiting.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

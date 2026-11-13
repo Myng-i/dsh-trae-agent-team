@@ -6,7 +6,7 @@ whenToUse: 任务能拆成 2 个以上独立可验收子任务、需要并行或
 
 # DSH ⇄ TRAE 派活与验收纪律
 
-版本 v0.1.21（2026-11-13）｜单文件技能，无外部依赖
+版本 v0.1.22（2026-11-13）｜单文件技能，无外部依赖
 修订：v0.1.1 依据 TRAE 审阅第 1 轮（T-000025，`docs/skill-审阅-20261113-trae侧.md` 9 条）与 DSH 独立实测（2 条硬断点）重写 §十；v0.1.2 依据第 2 轮（T-000026，`docs/skill-审阅-20261113-第2轮.md` 5 条）修 10.2/10.3/10.6/10.7 并新增 10.9 工具缺口；v0.1.3 按第 3 轮核验（T-000027）补一句 stats 不含 result。
 
 借鉴 @suifei/dsh-ai-team（文渊阁）的团队管理骨架——任务契约、claim 状态机、maker≠checker、PMO 导航——但**去掉它的自动扩散**，换成可核算的成本闸门。
@@ -326,7 +326,7 @@ node tools/wake-dsh.mjs send --text "【TRAE 叫醒】<任务号> done，见 bus
 | DSH 安装 | `~/.dsh/skills/dsh-trae-agent-team/SKILL.md` |
 | TRAE 安装 | `~/.trae-cn/skills/dsh-trae-agent-team/SKILL.md` |
 
-- 三份必须**逐字节相同**；改完各拷一份，再用 `Get-FileHash SKILL.md -Algorithm SHA256` 对一遍（三行哈希必须一致）。
+- 四份（含工作 home `~/.dsh-work/skills/…`）必须**逐字节相同**；改完各拷一份，再用 `Get-FileHash SKILL.md -Algorithm SHA256` 对一遍（四行哈希必须一致）。
 - 改名历史：`dsh-agent-team` → `dsh-trae-agent-team`（2026-11-13）；旧目录已移出技能根，备份放在**技能根之外**（如 `~/skill-backups/`）。
 - **备份目录不要留在任一 skills 根里（两边都算）**：`~/.dsh/skills/.xxx.backup-*` 与 `~/.trae-cn/skills/…` 的备份目录都含 `SKILL.md`、技能名与正式版相同，加载器按名去重时会选中备份。2026-11-13 实测：`~/.dsh/skills` 有 6 个 `dsh-trae-channel` 备份时，`skill("dsh-trae-channel")` 返回 12 983 字符（= v0.3.0 正文），而现装 v0.3.7 是 15 379 字符；TRAE 侧同样解析到 `.backup-v0.3.6`。修法：整目录 rename 到**技能根之外**（如 `~/skill-backups/skills-backup-<日期>/`）；TRAE 侧目录被占用（rename 连报 EPERM）时，把里面的 `SKILL.md` 移走即可让它不再被扫到。移完重调 `skill("<名>")` 核字符数/版本行。
 - TRAE 侧没有技能索引文件，靠目录扫描；装完要**重启 Trae CN**，列表里出现才算生效。
